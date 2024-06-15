@@ -67,13 +67,13 @@ if options == "Exploratory Data Analysis":
     # Time series analysis
     st.subheader("Time Series of AQI Values")
     fig, ax = plt.subplots(figsize=(15, 8))
-    sns.lineplot(x='Date', y='AQI', data=df, ci=None, ax=ax)
+    sns.lineplot(x='Date', y='AQI', data=df, errorbar=None, ax=ax)
     st.pyplot(fig)
 
     # AQI over time by location
     st.subheader("Time Series of AQI Values by Location")
     fig, ax = plt.subplots(figsize=(15, 8))
-    sns.lineplot(x='Date', y='AQI', hue='Location', data=df, ci=None, ax=ax)
+    sns.lineplot(x='Date', y='AQI', hue='Location', data=df, errorbar=None, ax=ax)
     st.pyplot(fig)
 
 elif options == "Prediction Model":
