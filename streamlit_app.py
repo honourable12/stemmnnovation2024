@@ -13,7 +13,7 @@ st.set_page_config(
 # Load the dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv('aqi_dataset_1500_days.csv')
+    df = pd.read_csv('assests/aqi_dataset_1500_days.csv')
     df['Date'] = pd.to_datetime(df['Date'])
     return df
 
@@ -24,7 +24,7 @@ st.title("AQI Data Analysis and Prediction for Precision Agriculture")
 
 
 # Sidebar for navigation
-st.sidebar.image("images/icon.jpeg", caption="logo", use_column_width=True)
+st.sidebar.image("assests/icon.jpeg", caption="logo", use_column_width=True)
 st.sidebar.title("Navigation")
 options = st.sidebar.selectbox("Select a page:", ["Exploratory Data Analysis", "Prediction Model"])
 
