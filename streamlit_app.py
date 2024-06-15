@@ -5,9 +5,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from bokeh.plotting import figure
-from bokeh.io import output_file, show
+from bokeh.io import show
 from bokeh.models import ColumnDataSource, HoverTool
-from bokeh.layouts import column
 from bokeh.transform import factor_cmap
 from bokeh.palettes import Spectral6
 
@@ -47,14 +46,14 @@ if options == "Exploratory Data Analysis":
     # Distribution of AQI values
     st.subheader("Distribution of AQI Values")
     hist, edges = np.histogram(df['AQI'], bins=50)
-    p1 = figure(title="Distribution of AQI Values", x_axis_label='AQI', y_axis_label='Frequency', plot_height=400, plot_width=700)
+    p1 = figure(title="Distribution of AQI Values", x_axis_label='AQI', y_axis_label='Frequency', height=400, width=700)
     p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color="skyblue", line_color="black")
     st.bokeh_chart(p1)
     
     # Distribution of AQI categories
     st.subheader("Distribution of AQI Categories")
     category_counts = df['Category'].value_counts()
-    p2 = figure(x_range=category_counts.index.tolist(), plot_height=400, plot_width=700, title="Distribution of AQI Categories")
+    p2 = figure(x_range=category_counts.index.tolist(), height=400, width=700, title="Distribution of AQI Categories")
     p2.vbar(x=category_counts.index.tolist(), top=category_counts.values, width=0.9, color=factor_cmap('x', palette=Spectral6, factors=category_counts.index.tolist()))
     p2.xgrid.grid_line_color = None
     p2.y_range.start = 0
@@ -63,7 +62,7 @@ if options == "Exploratory Data Analysis":
     
     # AQI Distribution by Location
     st.subheader("AQI Distribution by Location")
-    p3 = figure(x_range=df['Location'].unique().tolist(), plot_height=400, plot_width=700, title="AQI Distribution by Location")
+    p3 = figure(x_range=df['Location'].unique().tolist(), height=400, width=700, title="AQI Distribution by Location")
     p3.vbar(x=df['Location'].unique().tolist(), top=df.groupby('Location')['AQI'].mean(), width=0.9, color=factor_cmap('x', palette=Spectral6, factors=df['Location'].unique().tolist()))
     p3.xgrid.grid_line_color = None
     p3.y_range.start = 0
@@ -73,19 +72,19 @@ if options == "Exploratory Data Analysis":
     # Correlation heatmap
     st.subheader("Correlation Matrix of Pollutant Concentrations and AQI")
     corr = df[['PM2.5 (μg/m³)', 'PM10 (μg/m³)', 'O3 (ppm)', 'CO (ppm)', 'SO2 (ppm)', 'NO2 (ppm)', 'AQI']].corr()
-    p4 = figure(title="Correlation Matrix", plot_height=400, plot_width=700)
+    p4 = figure(title="Correlation Matrix", height=400, width=700)
     p4.image(image=[corr.values], x=0, y=0, dw=10, dh=10, palette="Viridis256")
     st.bokeh_chart(p4)
     
     # Time series analysis
     st.subheader("Time Series of AQI Values")
-    p5 = figure(title="Time Series of AQI Values", x_axis_label='Date', y_axis_label='AQI', x_axis_type='datetime', plot_height=400, plot_width=700)
+    p5 = figure(title="Time Series of AQI Values", x_axis_label='Date', y_axis_label='AQI', x_axis_type='datetime', height=400, width=700)
     p5.line(df['Date'], df['AQI'], line_width=2)
     st.bokeh_chart(p5)
     
     # AQI over time by location
     st.subheader("Time Series of AQI Values by Location")
-    p6 = figure(title="Time Series of AQI Values by Location", x_axis_label='Date', y_axis_label='AQI', x_axis_type='datetime', plot_height=400, plot_width=700)
+    p6 = figure(title="Time Series of AQI Values by Location", x_axis_label='Date', y_axis_label='AQI', x_axis_type='datetime', height=400, width=700)
     for loc in df['Location'].unique():
         loc_data = df[df['Location'] == loc]
         p6.line(loc_data['Date'], loc_data['AQI'], legend_label=loc, line_width=2)
@@ -136,7 +135,7 @@ elif options == "Prediction Model":
     # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     cm_df = pd.DataFrame(cm, index=model.classes_, columns=model.classes_)
-    p7 = figure(title="Confusion Matrix", x_axis_label='Predicted', y_axis_label='Actual', plot_height=400, plot_width=700)
+    p7 = figure(title="Confusion Matrix", x_axis_label='Predicted', y_axis_label='Actual', height=400, width=700)
     p7.image(image=[cm_df.values], x=0, y=0, dw=10, dh=10, palette="Blues256")
     st.bokeh_chart(p7)
     
