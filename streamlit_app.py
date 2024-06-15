@@ -1,19 +1,25 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+from bokeh.plotting import figure
+from bokeh.io import output_file, show
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.layouts import column
+from bokeh.transform import factor_cmap
+from bokeh.palettes import Spectral6
+
 st.set_page_config(
-    page_title='AQI data app',
+    page_title='AQI Data App',
     page_icon='🌡️',
 )
+
 # Load the dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv('assests/aqi_dataset_1500_days.csv')
+    df = pd.read_csv('assets/aqi_dataset_1500_days.csv')
     df['Date'] = pd.to_datetime(df['Date'])
     return df
 
@@ -22,9 +28,8 @@ df = load_data()
 # App Title
 st.title("AQI Data Analysis and Prediction for Precision Agriculture")
 
-
 # Sidebar for navigation
-st.sidebar.image("assests/icon.jpeg", caption="logo", use_column_width=True)
+st.sidebar.image("assets/icon.jpeg", caption="logo", use_column_width=True)
 st.sidebar.title("Navigation")
 options = st.sidebar.selectbox("Select a page:", ["Exploratory Data Analysis", "Prediction Model"])
 
@@ -41,40 +46,51 @@ if options == "Exploratory Data Analysis":
     
     # Distribution of AQI values
     st.subheader("Distribution of AQI Values")
-    fig, ax = plt.subplots()
-    sns.histplot(df['AQI'], bins=50, kde=True, color='skyblue', ax=ax)
-    st.pyplot(fig)
+    hist, edges = np.histogram(df['AQI'], bins=50)
+    p1 = figure(title="Distribution of AQI Values", x_axis_label='AQI', y_axis_label='Frequency', plot_height=400, plot_width=700)
+    p1.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color="skyblue", line_color="black")
+    st.bokeh_chart(p1)
     
     # Distribution of AQI categories
     st.subheader("Distribution of AQI Categories")
-    fig, ax = plt.subplots()
-    sns.countplot(x='Category', data=df, palette='viridis', order=df['Category'].value_counts().index, ax=ax)
-    st.pyplot(fig)
+    category_counts = df['Category'].value_counts()
+    p2 = figure(x_range=category_counts.index.tolist(), plot_height=400, plot_width=700, title="Distribution of AQI Categories")
+    p2.vbar(x=category_counts.index.tolist(), top=category_counts.values, width=0.9, color=factor_cmap('x', palette=Spectral6, factors=category_counts.index.tolist()))
+    p2.xgrid.grid_line_color = None
+    p2.y_range.start = 0
+    p2.add_tools(HoverTool(tooltips=[("Category", "@x"), ("Count", "@top")]))
+    st.bokeh_chart(p2)
     
     # AQI Distribution by Location
     st.subheader("AQI Distribution by Location")
-    fig, ax = plt.subplots()
-    sns.boxplot(x='Location', y='AQI', data=df, palette='Set3', ax=ax)
-    st.pyplot(fig)
+    p3 = figure(x_range=df['Location'].unique().tolist(), plot_height=400, plot_width=700, title="AQI Distribution by Location")
+    p3.vbar(x=df['Location'].unique().tolist(), top=df.groupby('Location')['AQI'].mean(), width=0.9, color=factor_cmap('x', palette=Spectral6, factors=df['Location'].unique().tolist()))
+    p3.xgrid.grid_line_color = None
+    p3.y_range.start = 0
+    p3.add_tools(HoverTool(tooltips=[("Location", "@x"), ("Average AQI", "@top")]))
+    st.bokeh_chart(p3)
     
     # Correlation heatmap
     st.subheader("Correlation Matrix of Pollutant Concentrations and AQI")
-    fig, ax = plt.subplots(figsize=(12, 10))
-    correlation_matrix = df[['PM2.5 (μg/m³)', 'PM10 (μg/m³)', 'O3 (ppm)', 'CO (ppm)', 'SO2 (ppm)', 'NO2 (ppm)', 'AQI']].corr()
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
-    st.pyplot(fig)
+    corr = df[['PM2.5 (μg/m³)', 'PM10 (μg/m³)', 'O3 (ppm)', 'CO (ppm)', 'SO2 (ppm)', 'NO2 (ppm)', 'AQI']].corr()
+    p4 = figure(title="Correlation Matrix", plot_height=400, plot_width=700)
+    p4.image(image=[corr.values], x=0, y=0, dw=10, dh=10, palette="Viridis256")
+    st.bokeh_chart(p4)
     
     # Time series analysis
     st.subheader("Time Series of AQI Values")
-    fig, ax = plt.subplots(figsize=(15, 8))
-    sns.lineplot(x='Date', y='AQI', data=df, errorbar=None, ax=ax)
-    st.pyplot(fig)
-
+    p5 = figure(title="Time Series of AQI Values", x_axis_label='Date', y_axis_label='AQI', x_axis_type='datetime', plot_height=400, plot_width=700)
+    p5.line(df['Date'], df['AQI'], line_width=2)
+    st.bokeh_chart(p5)
+    
     # AQI over time by location
     st.subheader("Time Series of AQI Values by Location")
-    fig, ax = plt.subplots(figsize=(15, 8))
-    sns.lineplot(x='Date', y='AQI', hue='Location', data=df, errorbar=None, ax=ax)
-    st.pyplot(fig)
+    p6 = figure(title="Time Series of AQI Values by Location", x_axis_label='Date', y_axis_label='AQI', x_axis_type='datetime', plot_height=400, plot_width=700)
+    for loc in df['Location'].unique():
+        loc_data = df[df['Location'] == loc]
+        p6.line(loc_data['Date'], loc_data['AQI'], legend_label=loc, line_width=2)
+    p6.legend.title = 'Location'
+    st.bokeh_chart(p6)
 
 elif options == "Prediction Model":
     st.header("AQI Prediction Model using Logistic Regression")
@@ -119,12 +135,10 @@ elif options == "Prediction Model":
     
     # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
-    fig, ax = plt.subplots()
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, yticklabels=model.classes_, ax=ax)
-    plt.xlabel('Predicted')
-    plt.ylabel('Actual')
-    plt.title('Confusion Matrix')
-    st.pyplot(fig)
+    cm_df = pd.DataFrame(cm, index=model.classes_, columns=model.classes_)
+    p7 = figure(title="Confusion Matrix", x_axis_label='Predicted', y_axis_label='Actual', plot_height=400, plot_width=700)
+    p7.image(image=[cm_df.values], x=0, y=0, dw=10, dh=10, palette="Blues256")
+    st.bokeh_chart(p7)
     
     # User input for prediction
     st.subheader("Predict AQI Category for New Data")
